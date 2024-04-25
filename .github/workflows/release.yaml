@@ -1,0 +1,67 @@
+name: Release Helm Chart
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'Chart.yaml'
+
+permissions:
+  contents: write
+  
+jobs:
+  update-readme-metadata:
+    runs-on: ['azure-identity']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          
+      - name: Setup Vars
+        id: vars
+        working-directory: weaviate
+        run: |
+          chart=$(yq '.name' Chart.yaml)
+          version=$(yq '.version' Chart.yaml)
+          acr="oci://acrapplications.azurecr.io/charts"
+          echo "acr=$acr" >>$GITHUB_OUTPUT
+          echo "chart=$chart" >>$GITHUB_OUTPUT
+          echo "version=$version" >>$GITHUB_OUTPUT
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.vars.outputs.version }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+
+      - name: Create package
+        if: github.ref == 'refs/heads/master'
+        working-directory: weaviate
+        run: helm package .
+      
+      - name: Az login
+        if: github.ref == 'refs/heads/master'
+        run: az login --identity
+
+      - name: ACR login
+        if: github.ref == 'refs/heads/master'
+        run: az acr login -n acrapplications      
+
+      - name: Push to ACR
+        if: github.ref == 'refs/heads/master'
+        working-directory: weaviate
+        run: helm push ${{ steps.vars.outputs.chart }}-${{ steps.vars.outputs.version }}.tgz ${{ steps.vars.outputs.acr }}
