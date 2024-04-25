@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - 'Chart.yaml'
+      - 'weaviate/Chart.yaml'
 
 permissions:
   contents: write
