@@ -385,6 +385,7 @@ backups:
 
   azure:
     enabled: false
+    
     envconfig:
       # Configure container where backups should be saved, this setting is mandatory
       BACKUP_AZURE_CONTAINER: weaviate-backups
@@ -410,11 +411,17 @@ backups:
 
     # If one has already defined secrets with Azure Storage credentials one can pass them using
     # this setting:
-    envSecrets: {}
+    envSecrets: 
     #   AZURE_STORAGE_ACCOUNT: name-of-the-k8s-secret-containing-the-account-name
     #   AZURE_STORAGE_KEY: name-of-the-k8s-secret-containing-account-key
-    #   AZURE_STORAGE_CONNECTION_STRING: name-of-the-k8s-secret-containing-connection-string
+      AZURE_STORAGE_CONNECTION_STRING: weaviate-backups-storage-connstring
 
+    custom:
+      storageConnectionString:
+        keyVaultName: ""
+        keyVaultSecretName: ""
+        podIdentityLabel: ""
+        azureTenantID: "69f82b29-1380-4974-ab4f-521b1a44c970"
 
 # modules are extensions to Weaviate, they can be used to support various
 # ML-models, but also other features unrelated to model inference.

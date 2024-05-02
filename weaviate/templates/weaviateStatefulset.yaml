@@ -21,6 +21,9 @@ spec:
         app: weaviate
         app.kubernetes.io/name: weaviate
         app.kubernetes.io/managed-by: {{ .Release.Service }}
+        {{- if .Values.backups.azure.enabled }}
+        aadpodidbinding: {{ .Values.backups.azure.custom.storageConnectionString.podIdentityLabel }}
+        {{- end }}
       annotations:
         # To restart Pods if the ConfigMap is updated.
         checksum/config: {{ include (print $.Template.BasePath "/weaviateConfigMap.yaml") . | sha256sum }}
@@ -380,6 +383,10 @@ spec:
             protocol: TCP
           {{- end }}
         volumeMounts:
+          {{- if .Values.backups.azure.enabled }}
+          - mountPath: /mnt/secrets-store
+            name: secrets-store-inline
+          {{- end }}
           - name: weaviate-config
             mountPath: /weaviate-config
           - name: weaviate-data
@@ -431,6 +438,14 @@ spec:
         securityContext:
 {{ toYaml .Values.containerSecurityContext | indent 10}}
       volumes:
+        {{- if .Values.backups.azure.enabled }}
+        - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: weaviate-azure-storage-spc
+          name: secrets-store-inline
+        {{- end }}
         - name: weaviate-config
           configMap:
             {{ if .Values.custom_config_map.enabled }}name: {{ .Values.custom_config_map.name }} {{ else }}name: weaviate-config{{ end }}

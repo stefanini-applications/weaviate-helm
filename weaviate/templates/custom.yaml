@@ -1,0 +1,23 @@
+{{- if .Values.backups.azure.enabled }}
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: weaviate-azure-storage-spc
+spec:
+  provider: azure
+  secretObjects:
+    - secretName: {{ .Values.backups.azure.envSecrets.AZURE_STORAGE_CONNECTION_STRING }}
+      type: Opaque
+      data:      
+      - objectName: {{ .Values.backups.azure.custom.storageConnectionString.keyVaultSecretName }}
+        key: AZURE_STORAGE_CONNECTION_STRING
+  parameters:
+    usePodIdentity: "true"
+    keyvaultName: {{ .Values.backups.azure.custom.storageConnectionString.keyVaultName }}
+    objects: |
+      array:
+        - |
+          objectName: {{ .Values.backups.azure.custom.storageConnectionString.keyVaultSecretName }}
+          objectType: secret
+    tenantId: {{ .Values.backups.azure.custom.storageConnectionString.azureTenantID }}
+{{- end }}
