@@ -439,12 +439,12 @@ spec:
 {{ toYaml .Values.containerSecurityContext | indent 10}}
       volumes:
         {{- if .Values.backups.azure.enabled }}
-        - csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: weaviate-azure-storage-spc
-          name: secrets-store-inline
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: weaviate-azure-storage-spc
         {{- end }}
         - name: weaviate-config
           configMap:
