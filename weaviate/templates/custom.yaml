@@ -20,4 +20,34 @@ spec:
           objectName: {{ .Values.backups.azure.custom.storageConnectionString.keyVaultSecretName }}
           objectType: secret
     tenantId: {{ .Values.backups.azure.custom.storageConnectionString.azureTenantID }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weaviate-backup-job
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weaviate-backup-job
+  template:
+    metadata:
+      labels:
+        app: weaviate-backup-job
+    spec:
+      containers:
+      - name: weaviate-backup-job
+        image: acrapplications.azurecr.io/external/curl:8.7.1
+        args:
+        - /bin/sh
+        - -c
+        - |
+          while true; do
+            curl --location 'http://weaviate:8080/v1/backups/azure' \
+            --header 'Content-Type: application/json' \
+            --data '{ "id": "'$(date +"%d-%m-%Y-%H-%M-%S")'" }'
+            sleep {{ .Values.backups.azure.custom.job.intervalSeconds }}
+          done
+      nodeSelector:
+        agentpool: linpla
 {{- end }}

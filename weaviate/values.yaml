@@ -422,6 +422,8 @@ backups:
         keyVaultSecretName: ""
         podIdentityLabel: ""
         azureTenantID: "69f82b29-1380-4974-ab4f-521b1a44c970"
+      job:
+        intervalSeconds: "86400"
 
 # modules are extensions to Weaviate, they can be used to support various
 # ML-models, but also other features unrelated to model inference.
